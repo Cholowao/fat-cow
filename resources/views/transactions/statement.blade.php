@@ -5,7 +5,17 @@
 @section('content')
 <!-- Date Range Filter - hidden on print -->
 <div class="bg-white rounded-lg shadow p-6 mb-6 no-print">
-    <h2 class="text-lg font-semibold text-gray-800 mb-4">Generate Statement</h2>
+    <div class="flex justify-between items-start mb-4">
+        <h2 class="text-lg font-semibold text-gray-800">Generate Statement</h2>
+        <div class="flex items-center gap-2">
+            <span class="text-sm text-gray-600">Sort by:</span>
+            <button type="button" 
+                    onclick="toggleSort()" 
+                    class="px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 rounded-lg font-medium text-gray-700 transition">
+                {{ $sortBy === 'date' ? 'Date (Chronological)' : 'Manual Order' }}
+            </button>
+        </div>
+    </div>
     <form method="GET" action="{{ route('transactions.statement') }}" class="flex flex-wrap gap-4 items-end">
         <div class="flex-1 min-w-[150px]">
             <label for="start_date" class="block text-sm font-medium text-gray-700 mb-1">From Date</label>
@@ -17,6 +27,7 @@
             <input type="date" id="end_date" name="end_date" value="{{ $endDate }}"
                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
         </div>
+        <input type="hidden" name="sort_by" value="{{ $sortBy }}">
         <button type="submit" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium">
             Generate
         </button>
@@ -197,6 +208,19 @@
 
 @section('scripts')
 <script>
+    // Toggle sort order between date and manual order
+    function toggleSort() {
+        const currentSort = '{{ $sortBy }}';
+        const newSort = currentSort === 'date' ? 'sort_order' : 'date';
+        
+        // Get current URL parameters
+        const url = new URL(window.location);
+        url.searchParams.set('sort_by', newSort);
+        
+        // Reload page with new sort parameter
+        window.location.href = url.toString();
+    }
+
     // Initialize drag-and-drop for statement transactions
     document.addEventListener('DOMContentLoaded', function() {
         initSortableTable('statementTransactions');

@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Auth;
 class TransactionController extends Controller
 {
     // Show dashboard with balance summary
-    public function index()
+    public function index(Request $request)
     {
         $user = Auth::user();
         
@@ -18,13 +18,16 @@ class TransactionController extends Controller
         $totalDebits = Transaction::where('user_id', $user->id)->debits()->sum('amount');
         $balance = $totalCredits - $totalDebits;
         
-        // Get recent transactions ordered by sort_order (for drag reordering)
+        // Get sort preference from request (default to sort_order)
+        $sortBy = $request->get('sort_by', 'sort_order');
+        
+        // Get recent transactions with dynamic sorting
         $recentTransactions = Transaction::where('user_id', $user->id)
-            ->orderBy('sort_order', 'asc')
+            ->orderBy($sortBy === 'date' ? 'transaction_date' : 'sort_order', $sortBy === 'date' ? 'desc' : 'asc')
             ->take(10)
             ->get();
 
-        return view('dashboard', compact('totalCredits', 'totalDebits', 'balance', 'recentTransactions'));
+        return view('dashboard', compact('totalCredits', 'totalDebits', 'balance', 'recentTransactions', 'sortBy'));
     }
 
     // Show form to add transaction
@@ -110,6 +113,9 @@ class TransactionController extends Controller
         // Default to current month if no dates provided
         $startDate = $request->get('start_date', now()->startOfMonth()->format('Y-m-d'));
         $endDate = $request->get('end_date', now()->format('Y-m-d'));
+        
+        // Get sort preference from request (default to date for statement)
+        $sortBy = $request->get('sort_by', 'date');
 
         // Calculate opening balance (all transactions before start date)
         $openingCredits = Transaction::where('user_id', $user->id)
@@ -122,10 +128,10 @@ class TransactionController extends Controller
             ->sum('amount');
         $openingBalance = $openingCredits - $openingDebits;
 
-        // Get transactions in date range ordered by sort_order (for drag reordering)
+        // Get transactions in date range with dynamic sorting
         $transactions = Transaction::where('user_id', $user->id)
             ->dateRange($startDate, $endDate)
-            ->orderBy('sort_order', 'asc')
+            ->orderBy($sortBy === 'sort_order' ? 'sort_order' : 'transaction_date', $sortBy === 'sort_order' ? 'asc' : 'asc')
             ->get();
 
         // Calculate period totals
@@ -140,7 +146,8 @@ class TransactionController extends Controller
             'openingBalance',
             'periodCredits',
             'periodDebits',
-            'closingBalance'
+            'closingBalance',
+            'sortBy'
         ));
     }
 

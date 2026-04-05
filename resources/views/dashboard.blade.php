@@ -87,8 +87,16 @@
 
 <!-- Recent Transactions -->
 <div class="bg-white rounded-lg shadow">
-    <div class="px-6 py-4 border-b border-gray-200">
+    <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
         <h2 class="text-lg font-semibold text-gray-800">Recent Transactions</h2>
+        <div class="flex items-center gap-2">
+            <span class="text-sm text-gray-600">Sort by:</span>
+            <button type="button" 
+                    onclick="toggleSort()" 
+                    class="px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 rounded-lg font-medium text-gray-700 transition">
+                {{ $sortBy === 'date' ? 'Date (Newest)' : 'Manual Order' }}
+            </button>
+        </div>
     </div>
     
     @if($recentTransactions->count() > 0)
@@ -171,6 +179,19 @@
 
 @section('scripts')
 <script>
+    // Toggle sort order between date and manual order
+    function toggleSort() {
+        const currentSort = '{{ $sortBy }}';
+        const newSort = currentSort === 'date' ? 'sort_order' : 'date';
+        
+        // Get current URL parameters
+        const url = new URL(window.location);
+        url.searchParams.set('sort_by', newSort);
+        
+        // Reload page with new sort parameter
+        window.location.href = url.toString();
+    }
+
     // Initialize drag-and-drop for dashboard transactions
     document.addEventListener('DOMContentLoaded', function() {
         initSortableTable('dashboardTransactions');
